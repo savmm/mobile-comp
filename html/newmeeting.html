@@ -1,0 +1,57 @@
+<div style="height:80%; max-height:calc(80% - 20px); margin-bottom:20px">
+	
+    <div id="div_Note" style="height:100%;"> </div>
+</div>
+
+	<div style="height:20%;">
+		<div class="col-xs-12 col-md-12 st-page">
+			<div id="smartEdit_MeetingDate" class="st-smartdate">
+				<i class="fa fa-clock-o fa-2x clock"></i>
+				<label class="date">Yarın</label>
+				<label class="time">Akşam</label>
+			</div>
+		</div>
+	</div>
+
+<div id="dialog_MeetingData" class="st-dialog light" style="-webkit-animation-duration:300ms;">
+</div>
+<script>
+    
+    $(document).ready(function(){
+    loadPageOnContainer("newnote.html","div_Note");
+    
+	$("#dialog_MeetingData").stDialog({
+		dialogType: "DatePicker",
+		targetDate: new Date(2015, 1, 1),
+		showTrigger: "#input_meetingDate",
+		TriggerEvent: "click",
+		onClose: function (data) {}
+	});
+
+
+	$("#textArea_SimpleHeader").stTextArea({
+		fillParent: "false"
+	});
+
+	$("#textArea_Simple").stTextArea({
+		fillParent: "true"
+
+	});
+
+
+	$("#smartEdit_MeetingDate").stDateEdit({
+		lang: "tr"
+	});
+        
+    });
+</script>
+
+
+
+
+
+
+
+
+
+

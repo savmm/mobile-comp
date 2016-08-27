@@ -1,0 +1,80 @@
+<div id="tabs_NewNoteAlert" class="st-tab-container">
+	<div class="pagination">
+		<div class="tab ">
+			<i class="fa fa-file-text-o fa-2x"></i>
+		</div>
+		<div class="tab active">
+			<i class="fa fa-tasks  fa-2x"></i>
+		</div>
+		<div class="tab ">
+			<i class="fa fa-paint-brush  fa-2x"></i>
+		</div>
+	</div>
+	<div style="height:100%">
+		<div class="wrapper">
+			<div class="page active">
+					<div>
+						<textarea id="textArea_SimpleHeader" class="st-textarea-header" placeholder="Başlık.." rows="1"></textarea>
+					</div>
+
+					<textarea id="textArea_Simple" class="st-textarea" placeholder="Not.."></textarea>
+			</div>
+			<div class="page">
+				<section>
+					<textarea id="textArea_SimpleHeader" class="st-textarea-header" placeholder="Başlık.." rows="1" style="padding-left:25px;"></textarea>
+					<div id="list_Tasks">
+					</div>
+				</section>
+			</div>
+			<div class="page">
+					<div id="drawPage" style="height:100%">
+					</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+
+
+<script>
+	$(document).ready(function () {
+
+		$("#list_Tasks").stTaskList({
+			sortable: "true"
+		});
+		$("#textArea_SimpleHeader").stTextArea({
+			fillParent: "false"
+		});
+
+		$("#textArea_Simple").stTextArea({
+			fillParent: "true"
+		});
+
+		$("#textArea_TasksNew").stTextArea({
+			fillParent: "false"
+		});
+
+		$("#tabs_NewNoteAlert").stTabs({
+
+
+		});
+		
+		$("#drawPage").stDrawPage({
+
+
+		});
+
+	});
+</script>
+
+
+
+
+
+
+
+
+
+

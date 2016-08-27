@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Blank Hybrid App Project Template (Lite)</title>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+	<script src="intelxdk.js"></script>
+	<script src="cordova.js"></script>
+	<script src="xhr.js"></script>
+	<script src="xdk/init-dev.js"></script>
+
+	<script src="js/jquery-1.11.2.min.js"></script>
+	<script src="js/stGraphs.js"></script>
+	<link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" type="text/css" href="css/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="css/sticon.css">
+	<style>
+		.st-draw-page {
+			width: 100%;
+			height: 600px;
+		}
+		rect {
+			transform-origin: center center;
+		}
+	</style>
+
+
+
+</head>
+
+<body>
+
+
+
+	<div id="page" class="st-draw-page">
+		<svg width="100%" height="100%">
+			  <line id="rx" x1="100" y1="100" x2="200" y2="100" style="stroke:green;stroke-width:2" >
+
+			</line>
+			<line id="r1" x1="0" y1="0" x2="10" y2="0" style="stroke:red;stroke-width:2" ></line>
+			  <rect id="r2" width=10 height=10  fill="red">
+			</rect>
+
+		</svg>
+
+	</div>
+
+	<script>
+		var NS = "http://www.w3.org/2000/svg";
+		var dr = "m 20.762828,20.620659 c -0.922,0 -1.842,-0.317 -2.59,-0.951 l -11.0100003,-9.352 c -1.684,-1.4300005 -1.889,-3.9550005 -0.459,-5.6380005 1.43,-1.684 3.9530003,-1.89 5.6390003,-0.459 l 8.42,7.1520005 8.42,-7.1520005 c 1.687,-1.43 4.211,-1.225 5.64,0.459 1.43,1.684 1.226,4.208 -0.459,5.6380005 l -11.011,9.352 c -0.746,0.635 -1.668,0.951 -2.59,0.951 z m 2.592,12.023 11.008,-9.352 c 1.684,-1.43 1.889,-3.955 0.459,-5.638 -1.43,-1.682 -3.955,-1.89 -5.639,-0.458 l -8.418,7.151 -8.422,-7.151 c -1.687,-1.431 -4.2090003,-1.225 -5.6400003,0.459 -1.431,1.684 -1.226,4.208 0.461,5.638 l 11.0130003,9.352 c 0.746,0.635 1.668,0.951 2.588,0.951 0.922,0 1.844,-0.316 2.59,-0.952 z";
+
+
+		function Point(x, y) {
+			this.x = x;
+			this.y = y;
+		}
+
+		function Size(width, height) {
+			this.width = width;
+			this.height = height;
+		}
+
+		function rotate(r, rx, ry) {
+			this.rotate = r;
+			this.rotateX = rx;
+			this.rotateY = ry;
+		}
+
+		(function ($) {
+
+			function Point(x, y) {
+				this.x = x;
+				this.y = y;
+			}
+
+			function Size(width, height) {
+				this.width = width;
+				this.height = height;
+			}
+
+			function rotate(r, rx, ry) {
+				this.rotate = r;
+				this.rotateX = rx;
+				this.rotateY = ry;
+			}
+
+			function Transform(x, y, r, sx, sy) {
+				this.transform = new Point(0, 0);
+				this.transform.x = x;
+				this.transform.y = y;
+				this.rotate = new rotate(r, 0, 0);
+				this.scale = new Point(0, 0);
+
+			}
+
+
+			function stDrawObject(object) {
+				this.object = object;
+				this.stTransform = null;
+				this.size = new Size(0, 0);
+				this.getTransform = function () {
+					var transform = new Transform(0, 0, 0, 0, 0);
+					$.each(this.object[0].transform.baseVal, function (index, trans) {
+						if (trans.type == 2) {
+							transform.transform.x = trans.matrix.e;
+							transform.transform.y = trans.matrix.f;
+						} else if (trans.type == 4) {
+							transform.rotate = new rotate(trans.angle, 0, 0);
+
+						} else if (trans.type == 3) {
+							transform.scale.x = trans.matrix.a;
+							transform.scale.y = trans.matrix.d;
+
+						}
+
+					});
+				
+					this.size.width = this.object[0].getBoundingClientRect().width ;
+					this.size.height = this.object[0].getBoundingClientRect().height ;
+					transform.rotate.rotateX =this.size.width /2;
+				transform.rotate.rotateY =this.size.height /2;
+					this.stTransform = transform;
+					return this.stTransform;
+				}
+				this.setLocation = function (x, y) {
+					this.object.attr("transform", "translate(" + x + "," + y + ") rotate(" + this.stTransform.rotate.rotate + "," 
+									 + ( this.object[0].getBoundingClientRect().width /2)+ "," + ( this.object[0].getBoundingClientRect().height/2 )
+									 + ") scale(" + this.stTransform.scale.x + "," + this.stTransform.scale.y + ")");
+					this.stTransform.transform.x = x;
+					this.stTransform.transform.y = y;
+					return this;
+				}
+				this.setRotate = function (r) {
+					this.object.attr("transform", "translate(" + this.stTransform.transform.x + "," + this.stTransform.transform.y +
+						") rotate(" + r.rotate + "," + r.rotateX + "," + r.rotateY + ") scale(" + this.stTransform.scale.x + "," +
+						this.stTransform.scale.y + ")");
+					this.stTransform.rotate.rotate = r.rotate;
+					this.stTransform.rotate.rotateX = r.rotateX;
+					this.stTransform.rotate.rotateY = r.rotateY;
+					return this;
+				}
+				this.setOnlyRotate = function (r) {
+					this.object.attr("transform", "rotate(" + r.rotate + "," + r.rotateX + "," + r.rotateY + ")");
+					this.stTransform.rotate.rotate = r.rotate;
+					this.stTransform.rotate.rotateX = r.rotateX;
+					this.stTransform.rotate.rotateY = r.rotateY;
+				}
+				this.setScale = function (sx, sy) {
+					this.size.width = this.object[0].getBBox().width * sx;
+					this.size.height = this.object[0].getBBox().height * sy;
+					
+					this.object.attr("transform", "translate(" + this.stTransform.transform.x + "," + 
+									 this.stTransform.transform.y + ") rotate(" + this.stTransform.rotate.rotate + "," + 
+									 (this.size.width/2) + "," + (this.size.height/2)+ ") scale(" + sx + "," + sy + ")");
+					this.stTransform.scale.x = sx;
+					this.stTransform.scale.y = sy;
+		
+					return this;
+				}
+				this.getTransform();
+
+			}
+
+			$.fn.stDraw = function () {
+
+				if (this.stDrawObject == undefined) {
+					this.stDrawObject = new stDrawObject(this);
+				}
+				return this.stDrawObject;
+
+			};
+		})(jQuery);
+
+
+
+		/**Main Variables**/
+		var _curObject;
+		var _startPoint = new Point();
+		var _startSize = new Size();
+		var _startScale = new Size();
+		var _startLocation = new Point();
+	    var resizerR = $(document.createElementNS(NS, "circle")).attr("class", "stresizer right");
+		var resizerB = $(document.createElementNS(NS, "circle")).attr("class", "stresizer bottom");
+		var resizerL = $(document.createElementNS(NS, "circle")).attr("class", "stresizer left");
+		var resizerT = $(document.createElementNS(NS, "circle")).attr("class", "stresizer top");
+		$("svg").append(resizerR, resizerT, resizerB, resizerL);
+		$(".stresizer").attr("r", 10);
+		$(".stresizer").attr("transform", "translate(0,0) rotate(0,0,0) scale(1 1)");
+		$(".stresizer").on("touchstart", resizerTouchStart).hide();
+		$(".stresizer").on("touchmove", resizerTouchMove).hide();
+
+		$("svg").on("touchstart", ontouchstart);
+		var r1=$("#r1");
+		var r2=$("#r2");
+		
+		r1.stDraw().setLocation(100,100).setScale(10,2);
+		r1.stDraw().setRotate(new rotate( 56,r1.stDraw().size.width/2,r1.stDraw().size.height/2))
+		
+		
+		r2.stDraw().setLocation(100,200).setScale(10,10);
+		r2.stDraw().setRotate(new rotate( 17,r2.stDraw().size.width/2,r2.stDraw().size.height/2))
+		
+		
+		function getDecTwoPoint(p1, p2) {
+			return Math.sqrt(Math.pow((p1.x - p2.x), 2) + Math.pow((p1.y - p2.y), 2));
+		}
+		
+		function getAngleAsRadian(degree)
+		{
+			return degree*Math.PI/180;
+		}
+		
+		function getPointByDecDegree(degree,dec)
+		{
+		   return new Point((Math.sin(getAngleAsRadian(90-degree))*dec/Math.sin(degree) ),
+						   (Math.sin(getAngleAsRadian(degree))*dec/Math.sin(degree) ));
+		}
+		function getPointByDecDegreeOrgin(degree,dec,orgin)
+		{
+		   /*return new Point(orgin.x+ (Math.sin(getAngleAsRadian(90-degree))*(dec.width)/Math.sin(90) ) ,
+						   orgin.y+(Math.sin(getAngleAsRadian(degree))*(dec.height)/Math.sin(90) ));*/
+			
+			return new Point(orgin.x+( dec.width * Math.cos(getAngleAsRadian(degree)) ) - ( dec.height * Math.sin(getAngleAsRadian(degree)) )  ,
+						   orgin.y+( dec.width * Math.sin(getAngleAsRadian(degree)) )+ ( dec.height * Math.cos(getAngleAsRadian(degree)) ) );
+			
+		}
+
+		/* Return Points: Right,Top,Bottom,Left in an Array*/
+		function getRotatedRectMidPoints(rect, angle, pointWidth) {
+
+			var bBox = rect.stDraw().getTransform();
+			var size = rect.stDraw().size;
+			var cos = Math.cos(angle);
+			var sin = Math.sin(angle);
+			var cx = bBox.transform.x+  (size.width/2)
+			var cy = bBox.transform.y + (size.height/2)
+			var r = new Point(0, 0);
+			var t = new Point(0, 0);
+			var b = new Point(0, 0);
+			var l = new Point(0, 0);
+
+				r=getPointByDecDegreeOrgin(angle,new Size(size.width/2,0)
+										   ,new Point(cx,cy));
+
+				t=getPointByDecDegreeOrgin(angle,new Size(0,size.height/2)
+										   ,new Point(cx, cy ) );
+
+				b= getPointByDecDegreeOrgin(angle,new Size(-1*size.width/2,0)
+										   ,new Point(cx, cy ) );
+
+				l=new Point(cx, cy ) 
+			
+
+			var result = new Array();
+			result.push(r, t, b, l);
+			return result;
+		}
+
+
+		var _newRotate = new rotate();
+
+		function showResizer() {
+			
+			$(".stresizer").show();
+			var rPoints = getRotatedRectMidPoints(_curObject, 17, 10);
+
+			resizerR.stDraw().setLocation(rPoints[0].x, rPoints[0].y);
+
+			resizerT.stDraw().setLocation(rPoints[1].x, rPoints[1].y);
+
+			resizerB.stDraw().setLocation(rPoints[2].x, rPoints[2].y);
+
+			resizerL.stDraw().setLocation(rPoints[3].x, rPoints[3].y);
+
+			//rotater.stDraw().setLocation(rPoints[1].x, rPoints[1].y-30);
+		}
+
+		function ontouchstart(event) {
+			if(!event.target.classList.contains("stresizer"))
+			{
+			_startPoint.x = event.originalEvent.touches[0].clientX;
+			_startPoint.y = event.originalEvent.touches[0].clientY;
+			_curObject = $(event.target);
+			showResizer();
+			}
+		}
+
+
+
+		function resizerTouchStart(event) {
+
+			_startPoint.x = event.originalEvent.touches[0].clientX ;
+			_startPoint.y = event.originalEvent.touches[0].clientY ;
+			_startSize.width = _curObject[0].getBoundingClientRect().width;
+			_startSize.height = _curObject[0].getBoundingClientRect().height;
+			_startScale.width = _curObject.stDraw().getTransform().scale.x;
+			_startScale.height = _curObject.stDraw().getTransform().scale.y;
+			
+			_startLocation.x=_curObject.stDraw().getTransform().transform.x;
+			_startLocation.y=_curObject.stDraw().getTransform().transform.y;
+		}
+
+		function resizerTouchMove(event) {
+			
+			var decX = getDecTwoPoint(_startPoint,new Point( event.originalEvent.touches[0].clientX, event.originalEvent.touches[0].clientY)) / _startSize.width;
+			var decY = getDecTwoPoint(_startPoint,new Point( event.originalEvent.touches[0].clientX, event.originalEvent.touches[0].clientY)) / _startSize.height;
+			
+			if (event.target.classList.contains("right")) {
+				
+				_curObject.stDraw().setScale(_startScale.width + (_startScale.width * decX), _startScale.height);
+	     	_curObject.stDraw().setLocation(_startLocation.x+(decX/2), _startLocation.y+50);
+				
+			} else
+			if (event.target.classList.contains("top")) {
+			} else
+			if (event.target.classList.contains("left")) {
+
+			} else
+			if (event.target.classList.contains("bottom")) {
+
+			} else if (event.target.classList.contains("rotate")) {
+
+			}
+		}
+
+			function ontouchstartex(event) {
+				/*bx = ax + d*cos(t)
+			 by = ay + d*sin(t)*/
+
+				var newX, newY;
+
+				resizerR.attr("r", 10);
+
+				newX = 150 + (50 * Math.cos(45)) + (10 + (Math.cos(45) * 10));
+				newY = 150 + (50 * Math.sin(45));
+
+				resizerR.attr("transform", "translate(" + newX + "," + newY + ") rotate(0)");
+
+
+
+				resizerT.attr("r", 10);
+
+				newX = 150 + (50 * Math.cos(45)) + (10 + (Math.cos(45) * 10));;
+				newY = 150 + (-50 * Math.sin(45));
+
+
+				resizerT.attr("transform", "translate(" + newX + "," + newY + ") rotate(0)");
+
+
+				resizerB.attr("r", 10);
+
+				newX = 150 + (-50 * Math.cos(45)) - (10 + (Math.cos(45) * 10));
+				newY = 150 + (50 * Math.sin(45));
+
+				resizerB.attr("transform", "translate(" + newX + "," + newY + ") rotate(0)");
+
+
+				resizerL.attr("r", 10);
+
+				newX = 150 + (-50 * Math.cos(45)) - (10 + (Math.cos(45) * 10));
+				newY = 150 + (-50 * Math.sin(45));
+
+				resizerL.attr("transform", "translate(" + newX + "," + newY + ") rotate(0)");
+
+				$("svg").append(resizerR, resizerT, resizerB, resizerL);
+
+			}
+	</script>
+
+</body>
+
+
+</html>
+
+
+
+
+
+
+
+

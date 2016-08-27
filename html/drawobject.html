@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Blank Hybrid App Project Template (Lite)</title>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+	<script src="intelxdk.js"></script>
+	<script src="cordova.js"></script>
+	<script src="xhr.js"></script>
+
+
+	<script src="js/jquery-1.11.2.min.js"></script>
+	<script src="js/stGraphs.js"></script>
+	<link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" type="text/css" href="css/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="css/sticon.css">
+	<style>
+		html {
+			min-height: 100% !important;
+			height: 100%;
+		}
+		body {
+			min-height: 100% !important;
+			height: 100%;
+		}
+		.st-draw-bar {
+			width: 100%;
+			height: 50px;
+			background-color: lightblue;
+			padding: 5px;
+		}
+		.st-draw-bar .shape-popup {
+			z-index: 99;
+		}
+		.st-draw-page {
+			width: 100%;
+			height: calc(100% - 55px);
+		}
+		.stresizer {
+			fill: #DF7D41;
+		}
+	</style>
+
+	<div class="st-draw-bar">
+		<div class="pull-right">
+			<button class="btn btn-success shapes st-icon-shapes st-icon-2x" data-icon="L"></button>
+		</div>
+
+	</div>
+
+	<div id="page" class="st-draw-page">
+
+	</div>
+
+</head>
+
+<body>
+
+
+
+	<script>
+		function Point(x, y) {
+			this.x = x;
+			this.y = y;
+		}
+
+		function Size(width, height) {
+			this.width = width;
+			this.height = height;
+		}
+
+		function rotate(r, rx, ry) {
+			this.rotate = r;
+			this.rotateX = rx;
+			this.rotateY = ry;
+		}
+
+
+		(function ($) {
+
+			function Point(x, y) {
+				this.x = x;
+				this.y = y;
+			}
+
+			function Size(width, height) {
+				this.width = width;
+				this.height = height;
+			}
+
+			function rotate(r, rx, ry) {
+				this.rotate = r;
+				this.rotateX = rx;
+				this.rotateY = ry;
+			}
+
+			function Transform(x, y, r, sx, sy) {
+				this.transform = new Point(0, 0);
+				this.transform.x = x;
+				this.transform.y = y;
+				this.rotate = new rotate(r, 0, 0);
+				this.scale = new Point(0, 0);
+
+			}
+
+
+			function stDrawObject(object) {
+				this.object = object;
+				this.stTransform = null;
+				this.size = new Size(0, 0);
+				this.getTransform = function () {
+					var transform = new Transform(0, 0, 0, 0, 0);
+					$.each(this.object[0].transform.baseVal, function (index, trans) {
+						if (trans.type == 2) {
+							transform.transform.x = trans.matrix.e;
+							transform.transform.y = trans.matrix.f;
+						} else if (trans.type == 4) {
+							transform.rotate = new rotate(trans.angle, 0, 0);
+
+						} else if (trans.type == 3) {
+							transform.scale.x = trans.matrix.a;
+							transform.scale.y = trans.matrix.d;
+
+						}
+
+					});
+					this.size.width = this.object[0].getBBox().width * transform.scale.x;
+					this.size.height = this.object[0].getBBox().height * transform.scale.y;
+					this.stTransform = transform;
+					return this.stTransform;
+				}
+				this.setLocation = function (x, y) {
+					this.object.attr("transform", "translate(" + x + "," + y + ") rotate(" + this.stTransform.rotate.rotate + "," + this.stTransform.rotate.rotateX + "," + this.stTransform.rotate.rotateY + ") scale(" + this.stTransform.scale.x + "," + this.stTransform.scale.y + ")");
+					this.stTransform.transform.x = x;
+					this.stTransform.transform.y = y;
+				}
+				this.setRotate = function (r) {
+					this.object.attr("transform", "translate(" + this.stTransform.transform.x + "," + this.stTransform.transform.y +
+						") rotate(" + r.rotate + "," + r.rotateX + "," + r.rotateY + ") scale(" + this.stTransform.scale.x + "," +
+						this.stTransform.scale.y + ")");
+					this.stTransform.rotate.rotate = r.rotate;
+					this.stTransform.rotate.rotateX = r.rotateX;
+					this.stTransform.rotate.rotateY = r.rotateY;
+				}
+				this.setOnlyRotate = function (r) {
+					this.object.attr("transform", "rotate(" + r.rotate + "," + r.rotateX + "," + r.rotateY + ")");
+					this.stTransform.rotate.rotate = r.rotate;
+					this.stTransform.rotate.rotateX = r.rotateX;
+					this.stTransform.rotate.rotateY = r.rotateY;
+				}
+				this.setScale = function (sx, sy) {
+					this.object.attr("transform", "translate(" + this.stTransform.transform.x + "," + this.stTransform.transform.y + ") rotate(" + this.stTransform.rotate.rotate + "," + this.stTransform.rotate.rotateX + "," + this.stTransform.rotate.rotateY + ") scale(" + sx + "," + sy + ")");
+					this.stTransform.scale.x = sx;
+					this.stTransform.scale.y = sy;
+					this.size.width = this.object[0].getBBox().width * sx;
+					this.size.height = this.object[0].getBBox().height * sy;
+				}
+				this.getTransform();
+
+			}
+
+			$.fn.stDraw = function () {
+
+				if (this.stDrawObject == undefined) {
+					this.stDrawObject = new stDrawObject(this);
+				}
+				return this.stDrawObject;
+
+			};
+		})(jQuery);
+
+
+		/*GRAPHS*/
+
+
+		/*GRAPHS END*/
+
+		/*BAR*/
+		var drawBar = $(".st-draw-bar");
+		var shapesPopupHtml = '<div class="shape-popup btn-group-vertical" role="group"  > \
+ 										<button class="btn btn-success  st-tool-item st-icon-rectangle st-icon-2x" data-drawmode="rectangle"></button> \
+										<button class="btn btn-success  st-tool-item  st-icon-circle st-icon-2x" data-drawmode="circle"></button> \
+										<button class="btn btn-success  st-tool-item  st-icon-trirect st-icon-2x" data-drawmode="triangle"></button> \
+										<button class="btn btn-success  st-tool-item  st-icon-star st-icon-2x" data-drawmode="star"></button> \
+								</div>';
+		drawBar.append(shapesPopupHtml);
+		drawBar.find(".shape-popup").hide();
+
+		drawBar.find(".shapes").on("click", function (event) {
+			var target = $(event.target);
+			var shapePopup = drawBar.find(".shape-popup");
+			shapePopup.css("top", target.position().top + target.height() + 5);
+			shapePopup.css("left", target.position().left - (shapePopup.width() / 2));
+			shapePopup.show();
+
+		});
+
+		drawBar.find(".st-tool-item").on("click", function (event) {
+			drawMode = $(event.target).data("drawmode");
+			drawBar.find(".shape-popup").hide();
+			_ObjectHandle = false;
+
+		});
+
+		var page = $("#page");
+		page.append("<svg id='stPaper'></svg>");
+		var paper = page.find("#stPaper");
+		paper.css("width", "100%");
+		paper.css("height", page.height() + "px");
+		var _offsetX = page.offset().left;
+		var _offsetY = page.offset().top;
+		var _curObject;
+		var drawMode;
+		var _startPoint = new Point();
+		var _startSize = new Size();
+		var _startScale = new Size();
+		var _objectStartLocation = new Point();
+		var NS = "http://www.w3.org/2000/svg";
+		var grapHelper = new stGraphHelper();
+
+		var resizerR = $(document.createElementNS(NS, "circle")).attr("class", "stresizer right");
+		var resizerB = $(document.createElementNS(NS, "circle")).attr("class", "stresizer bottom");
+		var resizerL = $(document.createElementNS(NS, "circle")).attr("class", "stresizer left");
+		var resizerT = $(document.createElementNS(NS, "circle")).attr("class", "stresizer top");
+		var rotater = $(document.createElementNS(NS, "path")).attr("class", "stresizer rotate");
+
+
+		rotater.stDraw().setScale(1.7, 1.7);
+
+
+		paper.append(resizerB, resizerL, resizerR, resizerT, rotater);
+
+
+		function createElement() {
+			var preScale = "1";
+			var object;
+			switch (drawMode) {
+			case "circle":
+				{
+					object = document.createElementNS(NS, "circle");
+					object.r.baseVal.value = 5;
+					break;
+
+				}
+			case "rectangle":
+				{
+					object = document.createElementNS(NS, "rect");
+					object.width.baseVal.value = 10;
+					object.height.baseVal.value = 10;
+					break;
+				}
+			case "triangle":
+				{
+					object = document.createElementNS(NS, "polyline");
+					$(object).attr("points", "0,0  30,0  15,30")
+					break;
+				}
+			case "star":
+				{
+					object = document.createElementNS(NS, "path");
+					$(object).attr("d", grapHelper.getGraph("star").d);
+					break;
+				}
+			}
+
+			_curParent = document.createElementNS(NS, "g");
+			_curObject = $(object);
+			$(_curParent).append(_curObject);
+
+			_curObject.attr("transform", "translate(0,0) rotate(0,0,0) scale(" + preScale + "," + preScale + ")");
+			_curObject.stDraw().setLocation(_startPoint.x - _offsetX, _startPoint.y - _offsetY);
+			_curObject.on("touchstart", elementTouchStart);
+			_curObject.on("touchmove", elementTouchMove);
+			_curObject.on("touchend", elementTouchEnd);
+			paper.append(_curParent);
+
+		}
+
+		paper.bind("touchstart", function (event) {
+			_startPoint.x = event.originalEvent.touches[0].clientX;
+			_startPoint.y = event.originalEvent.touches[0].clientY;
+
+			if (drawMode == "handle") {
+				return;
+			}
+			createElement();
+			_startSize.width = _curObject[0].getBoundingClientRect().width;
+			_startSize.height = _curObject[0].getBoundingClientRect().height;
+
+		});
+
+		paper.bind("touchmove", function (event) {
+			if (drawMode == "handle") {
+				return;
+			}
+			var decX = ((Math.abs(event.originalEvent.touches[0].clientX - _startPoint.x))) / (_startSize.width);
+			var decY = ((Math.abs(event.originalEvent.touches[0].clientY - _startPoint.y))) / (_startSize.height);
+			decX = decX > decY ? decX : decY;
+			if (_curObject[0].hasOwnProperty("r")) {
+				_curObject.stDraw().setScale((decX * 2), (decX * 2));
+			} else {
+				_curObject.stDraw().setScale((decX), (decX));
+			}
+		});
+
+		function elementTouchStart(event) {
+			drawMode = "handle";
+			_curObject = $(event.target);
+			_curParent = _curObject.parent();
+			_startPoint.x = event.originalEvent.touches[0].clientX;
+			_startPoint.y = event.originalEvent.touches[0].clientY;
+			_objectStartLocation.x = _curParent[0].getBoundingClientRect().left;
+			_objectStartLocation.y = _curParent[0].getBoundingClientRect().top;
+
+			$(".stresizer").attr("r","10");
+						$(".stresizer.rotate").attr("d", "M8,0C3.582,0,0,3.582,0,8s3.582,8,8,8s8-3.582,8-8S12.418,0,8,0z M8,14   c-2.169,0-4.07-1.15-5.124-2.876L2,12V8h2h1h1L4.354,9.646C4.981,11.034,6.378,12,8,12c1.863,0,3.43-1.273,3.874-3h2.043   C13.441,11.838,10.973,14,8,14z M12,8h-1h-1l1.646-1.646C11.02,4.966,9.622,4,8,4C6.136,4,4.57,5.274,4.126,7H2.083   C2.559,4.162,5.027,2,8,2c2.169,0,4.07,1.151,5.124,2.876L14,4v4H12z");
+
+			_curParent.append($(".stresizer"));
+			$(".stresizer").on("touchstart", resizerTouchStart).hide();
+			$(".stresizer").on("touchmove", resizerTouchMove).hide();
+			$(".stresizer").show();
+			$(".stresizer").stDraw().setScale(1, 1);
+
+			showResizer();
+		}
+
+		function elementTouchMove(event) {
+			drawMode = "handle";
+			_curObject.attr("fill-opacity", "0.7");
+			if (event.originalEvent.touches.length == 1) {
+				if (_curObject[0].hasOwnProperty("r")) {
+					_curParent.stDraw().setLocation(
+						(event.originalEvent.touches[0].clientX) - (Math.abs(_startPoint.x - _objectStartLocation.x)) -
+						_offsetX + (_curObject[0].getBoundingClientRect().width / 2),
+						event.originalEvent.touches[0].clientY - Math.abs(_startPoint.y - _objectStartLocation.y) -
+						_offsetY + (_curObject[0].getBoundingClientRect().height / 2));
+
+				} else {
+					_curParent.stDraw().setLocation(
+						(event.originalEvent.touches[0].clientX) - Math.abs(_startPoint.x - _objectStartLocation.x) - _offsetX,
+						event.originalEvent.touches[0].clientY - Math.abs(_startPoint.y - _objectStartLocation.y) - _offsetY);
+				}
+				showResizer()
+			}
+
+		}
+
+		function elementTouchEnd(event) {
+			_curObject.attr("fill-opacity", "1");
+		}
+
+		function getAngleBetweenPoints(p1, p2) {
+
+			return Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
+		}
+		 // Return Points: Right,Top,Bottom,Left in an Array
+		function getRotatedRectMidPoints(rect, angle,pointWidth) {
+
+			var bBox = rect.stDraw().getTransform();
+			var size = rect.stDraw().size;
+			var cx = bBox.transform.x + (size.width / 2);
+			var cy = bBox.transform.y + (size.height / 2);
+			var cos = Math.cos(angle);
+			var sin = Math.sin(angle);
+			var r = new Point(0, 0);
+			var t = new Point(0, 0);
+			var b = new Point(0, 0);
+			var l = new Point(0, 0);
+			if (angle ==0 ) {
+				r.x = cx + ((size.width / 2) ) +pointWidth;
+				r.y = cy;
+
+				t.x = cx ;
+				t.y = cy + (-(size.height / 2) )-pointWidth;
+
+				b.x = cx ;
+				b.y = cy + ((size.height / 2) )+pointWidth;
+
+				l.x = cx + (-(size.width / 2) )-pointWidth;
+				l.y = cy ;
+			} else
+			{
+				r.x = cx + ((size.width / 2) * cos);
+				r.y = cy + ((size.height / 2) * sin);
+
+				t.x = cx + ((size.width / 2) * cos);
+				t.y = cy + (-(size.height / 2) * sin);
+
+				b.x = cx + (-(size.width / 2) * cos);
+				b.y = cy + ((size.height / 2) * sin);
+
+				l.x = cx + (-(size.width / 2) * cos);
+				l.y = cy + (-(size.height / 2) * sin);
+			}
+
+			var result = new Array();
+			result.push(r, t, b, l);
+			return result;
+		}
+
+
+		var _newRotate = new rotate();
+
+		function showResizer() {
+			var rPoints = getRotatedRectMidPoints(_curObject, 0,10);
+
+			resizerR.stDraw().setLocation(rPoints[0].x, rPoints[0].y);
+
+			resizerT.stDraw().setLocation(rPoints[1].x, rPoints[1].y);
+
+			resizerB.stDraw().setLocation(rPoints[2].x, rPoints[2].y);
+
+			resizerL.stDraw().setLocation(rPoints[3].x, rPoints[3].y);
+			
+			rotater.stDraw().setLocation(rPoints[1].x, rPoints[1].y-30);
+		}
+
+		function resizerTouchStart(event) {
+
+			_startPoint.x = event.originalEvent.touches[0].clientX-_offsetX;
+			_startPoint.y = event.originalEvent.touches[0].clientY-_offsetY;
+			_startSize.width = _curObject[0].getBoundingClientRect().width;
+			_startSize.height = _curObject[0].getBoundingClientRect().height;
+			_startScale.width = _curObject.stDraw().getTransform().scale.x;
+			_startScale.height = _curObject.stDraw().getTransform().scale.y;
+		}
+
+		function getPointAngleDec(point, point2, angle) {
+			var decX = point2.x - point.x;
+			var decY = point2.x - point.x;
+
+			var newX = point.x + (decX * Math.cos(45));
+			var newY = point.y + (decY * Math.sin(45));
+
+		}
+
+
+		function resizerTouchMove(event) {
+
+			var decX = ((event.originalEvent.touches[0].clientX - _startPoint.x)) / (_startSize.width);
+			var decY = ((event.originalEvent.touches[0].clientY - _startPoint.y)) / (_startSize.height);
+
+
+			if (event.target.classList.contains("right")) {
+				if (_curObject[0].hasOwnProperty("r")) {
+					_curObject.stDraw().setScale(_startScale.width + (_startScale.width * decX), _startScale.height);
+					_curObject.stDraw().setLocation(event.originalEvent.touches[0].clientX - _offsetX -
+						(_curObject[0].getBoundingClientRect().width / 2), _curObject.stDraw().getTransform().transform.y);
+
+				} else {
+					_curObject.stDraw().setScale(_startScale.width + (_startScale.width * decX), _startScale.height);
+				}
+			} else
+			if (event.target.classList.contains("top")) {
+
+				if (_curObject[0].hasOwnProperty("r")) {
+					_curObject.stDraw().setLocation(_curObject.stDraw().getTransform().transform.x,
+						event.originalEvent.touches[0].clientY - _offsetY +
+						(_curObject[0].getBoundingClientRect().height / 2));
+					_curObject.stDraw().setScale(_startScale.width, _startScale.height + (_startScale.height * (-1 * decY)));
+				} else {
+					_curObject.stDraw().setScale(_startScale.width, _startScale.height + (_startScale.height * (-1 * decY)));
+					_curObject.stDraw().setLocation(_curObject.stDraw().getTransform().transform.x,
+						event.originalEvent.touches[0].clientY - _offsetY);
+				}
+
+
+
+			} else
+			if (event.target.classList.contains("left")) {
+				_curObject.stDraw().setScale(_startScale.width + (_startScale.width * (decX * -1)), _startScale.height);
+				if (_curObject[0].hasOwnProperty("r")) {
+					_curObject.stDraw().setLocation(event.originalEvent.touches[0].clientX - _offsetX +
+						(_curObject[0].getBoundingClientRect().width / 2), _curObject.stDraw().getTransform().transform.y);
+				} else {
+					_curObject.stDraw().setLocation(event.originalEvent.touches[0].clientX - _offsetX, _curObject.stDraw().getTransform().transform.y);
+				}
+			} else
+			if (event.target.classList.contains("bottom")) {
+				if (_curObject[0].hasOwnProperty("r")) {
+					_curObject.stDraw().setLocation(_curObject.stDraw().getTransform().transform.x,
+						event.originalEvent.touches[0].clientY - _offsetY -
+						(_curObject[0].getBoundingClientRect().height / 2));
+					_curObject.stDraw().setScale(_startScale.width, _startScale.height + (_startScale.height * decY));
+				} else {
+					_curObject.stDraw().setScale(_startScale.width, _startScale.height + (_startScale.height * decY));
+				}
+			} else if (event.target.classList.contains("rotate")) {
+				_curParent.stDraw().setOnlyRotate(
+					new rotate(getAngleBetweenPoints(_startPoint, new Point(event.originalEvent.touches[0].clientX - _offsetX, event.originalEvent.touches[0].clientY)),
+						_curObject.stDraw().getTransform().transform.x + (_curObject.stDraw().size.width / 2),
+						_curObject.stDraw().getTransform().transform.y + (_curObject.stDraw().size.height / 2)));
+			}
+
+			showResizer(event);
+		}
+	</script>
+
+</body>
+
+
+</html>
+
+
+
+
+
+
+
+
